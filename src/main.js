@@ -1,28 +1,35 @@
 import iziToast from 'izitoast';
 import 'izitoast/dist/css/iziToast.min.css';
+import SimpleLightbox from 'simplelightbox';
+import 'simplelightbox/dist/simple-lightbox.min.css';
 import errorIcon from '../src/img/bi_x-octagon.svg';
-import resolveIcon from '../src/img/bi_check2-circle.svg';
 
 const searchForm = document.querySelector('.js-search-form');
-const container = document.querySelector('.js-container');
+const list = document.querySelector('.gallery');
 
 searchForm.addEventListener('submit', handleSubmit);
 
 function handleSubmit(e) {
   e.preventDefault();
+  searchForm.insertAdjacentHTML('afterend', '<span class="loader"></span>');
 
   const name = e.target.elements.search.value;
-  getPictures(name).then(data => {
-    renderImages(data.hits);
-  });
-
+  if (name !== '') {
+    getPictures(name)
+      .then(data => {
+        renderImages(data.hits);
+      })
+      .then(pictures => {
+        const spanLoader = document.querySelector('.loader');
+        spanLoader.remove();
+      });
+  }
   searchForm.reset();
 }
 
 function onFormSubmit(e) {}
 
 function getPictures(picture) {
-  const BASE_URL = 'https://pixabay.com/api';
   const searchParams = new URLSearchParams({
     key: '42121827-736028e2edd071afefc989558',
     q: `${picture}`,
@@ -30,8 +37,7 @@ function getPictures(picture) {
     orientation: 'horizontal',
     safesearch: true,
   });
-  const PARAMS = `?${searchParams}`;
-  const url = BASE_URL + PARAMS;
+  const url = `https://pixabay.com/api/?${searchParams}`;
 
   return fetch(url)
     .then(res => {
@@ -42,33 +48,34 @@ function getPictures(picture) {
     })
     .catch(error => {
       console.error('Error fetching pictures:', error);
-      throw error; // Переброс ошибки для обработки в блоке catch при вызове getPictures
+      throw error;
     });
 }
 
 function imageTemplate(arr) {
   return arr
     .map(
-      ({ previewURL }) => `<div class="card-container">
-    <div>
-        <img src="${previewURL}" alt="#" class="picture">
+      arr => `<li class="card-container">
+            <a href="${arr.largeImageURL}"><img src="${arr.webformatURL}" alt="${arr.tags}" class="gallery-image"></a>
+    
+    <div class="picture-card">
+        <p><span class="description">Likes</span>${arr.likes}</p>
+        <p><span class="description">Views</span>${arr.views}</p>
+        <p><span class="description">Comments</span>${arr.comments}</p>
+        <p><span class="description">Downloads</span>${arr.downloads}</p>
     </div>
-    <div>
-       <h4 class="picture-name"></h4>
-       <p class="description"></p>
-    </div>
-</div>`
+</li>`
     )
     .join('');
 }
 
 function renderImages(arr) {
-  container.innerHTML = '';
+  list.innerHTML = '';
   if (arr.length === 0) {
     return iziToast.show({
       title: 'Error',
       titleColor: 'rgba(255, 255, 255, 1)',
-      message: `Rejected promise in ms`,
+      message: `Sorry, there are no images matching your search query. Please try again!`,
       messageColor: 'rgba(255, 255, 255, 1)',
       backgroundColor: 'rgba(239, 64, 64, 1)',
       iconUrl: errorIcon,
@@ -76,5 +83,15 @@ function renderImages(arr) {
     });
   }
   const markup = imageTemplate(arr);
-  container.insertAdjacentHTML('beforeend', markup);
+  list.insertAdjacentHTML('beforeend', markup);
+  simpleLightbox();
+}
+
+function simpleLightbox() {
+  let gallery = new SimpleLightbox('.gallery a', {
+    captionsData: 'alt',
+    captionDelay: 250,
+  });
+  gallery.on('show.simplelightbox');
+  gallery.refresh();
 }
