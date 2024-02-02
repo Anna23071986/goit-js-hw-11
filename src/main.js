@@ -15,14 +15,9 @@ function handleSubmit(e) {
 
   const name = e.target.elements.search.value;
   if (name !== '') {
-    getPictures(name)
-      .then(data => {
-        renderImages(data.hits);
-      })
-      .then(pictures => {
-        const spanLoader = document.querySelector('.loader');
-        spanLoader.remove();
-      });
+    getPictures(name).then(data => {
+      renderImages(data.hits);
+    });
   }
   searchForm.reset();
 }
@@ -44,10 +39,12 @@ function getPictures(picture) {
       if (!res.ok) {
         throw new Error(`HTTP error! Status: ${res.status}`);
       }
+      const spanLoader = document.querySelector('.loader');
+      spanLoader.remove();
+
       return res.json();
     })
     .catch(error => {
-      console.error('Error fetching pictures:', error);
       throw error;
     });
 }
@@ -55,9 +52,10 @@ function getPictures(picture) {
 function imageTemplate(arr) {
   return arr
     .map(
-      arr => `<li class="card-container">
+      arr => `<li class="gallery-item">
+      <div class="image-container">
             <a href="${arr.largeImageURL}"><img src="${arr.webformatURL}" alt="${arr.tags}" class="gallery-image"></a>
-    
+    </div>
     <div class="picture-card">
         <p><span class="description">Likes</span>${arr.likes}</p>
         <p><span class="description">Views</span>${arr.views}</p>
