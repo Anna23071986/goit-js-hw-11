@@ -11,26 +11,36 @@ searchForm.addEventListener('submit', handleSubmit);
 
 function handleSubmit(e) {
   e.preventDefault();
-  searchForm.insertAdjacentHTML('afterend', '<span class="loader"></span>');
 
-  const name = e.target.elements.search.value;
-  if (name !== '') {
-    getPictures(name).then(data => {
-      renderImages(data.hits);
+  const value = e.target.elements.search.value;
+  const hasLoader = document.querySelector('.loader');
+
+  if (value !== '' && !hasLoader) {
+    list.innerHTML = '';
+
+    searchForm.insertAdjacentHTML('afterend', '<span class="loader"></span>');
+
+    getPictures(value).then(data => {
+      setTimeout(() => {
+        const spanLoader = document.querySelector('.loader');
+        if (spanLoader) {
+          spanLoader.remove();
+        }
+        renderImages(data.hits);
+      }, 500);
     });
   }
   searchForm.reset();
 }
 
-function onFormSubmit(e) {}
-
-function getPictures(picture) {
+function getPictures(value) {
   const searchParams = new URLSearchParams({
     key: '42121827-736028e2edd071afefc989558',
-    q: `${picture}`,
+    q: `${value}`,
     image_type: 'photo',
     orientation: 'horizontal',
     safesearch: true,
+    per_page: 100,
   });
   const url = `https://pixabay.com/api/?${searchParams}`;
 
@@ -39,9 +49,6 @@ function getPictures(picture) {
       if (!res.ok) {
         throw new Error(`HTTP error! Status: ${res.status}`);
       }
-      const spanLoader = document.querySelector('.loader');
-      spanLoader.remove();
-
       return res.json();
     })
     .catch(error => {
@@ -49,31 +56,10 @@ function getPictures(picture) {
     });
 }
 
-function imageTemplate(arr) {
-  return arr
-    .map(
-      arr => `<li class="gallery-item">
-      <div class="image-container">
-            <a href="${arr.largeImageURL}"><img src="${arr.webformatURL}" alt="${arr.tags}" class="gallery-image"></a>
-    </div>
-    <div class="picture-card">
-        <p><span class="description">Likes</span>${arr.likes}</p>
-        <p><span class="description">Views</span>${arr.views}</p>
-        <p><span class="description">Comments</span>${arr.comments}</p>
-        <p><span class="description">Downloads</span>${arr.downloads}</p>
-    </div>
-</li>`
-    )
-    .join('');
-}
-
 function renderImages(arr) {
-  list.innerHTML = '';
   if (arr.length === 0) {
     return iziToast.show({
-      title: 'Error',
-      titleColor: 'rgba(255, 255, 255, 1)',
-      message: `Sorry, there are no images matching your search query. Please try again!`,
+      message: `Sorry, there are no images matching<br>your search query. Please try again!`,
       messageColor: 'rgba(255, 255, 255, 1)',
       backgroundColor: 'rgba(239, 64, 64, 1)',
       iconUrl: errorIcon,
@@ -83,6 +69,25 @@ function renderImages(arr) {
   const markup = imageTemplate(arr);
   list.insertAdjacentHTML('beforeend', markup);
   simpleLightbox();
+}
+
+function imageTemplate(arr) {
+  return arr
+    .map(
+      arr =>
+        `<li class="gallery-item">
+            <div class="image-container">
+                <a href="${arr.largeImageURL}"><img src="${arr.webformatURL}" alt="${arr.tags}" class="gallery-image"></a>
+            </div>
+            <div class="gallery-card">
+                <p><span class="description">Likes</span>${arr.likes}</p>
+                <p><span class="description">Views</span>${arr.views}</p>
+                <p><span class="description">Comments</span>${arr.comments}</p>
+                <p><span class="description">Downloads</span>${arr.downloads}</p>
+            </div>
+        </li>`
+    )
+    .join('');
 }
 
 function simpleLightbox() {
