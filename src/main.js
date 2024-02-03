@@ -9,6 +9,11 @@ const list = document.querySelector('.gallery');
 
 searchForm.addEventListener('submit', handleSubmit);
 
+const gallery = new SimpleLightbox('.gallery a', {
+  captionsData: 'alt',
+  captionDelay: 250,
+});
+
 function handleSubmit(e) {
   e.preventDefault();
 
@@ -68,7 +73,8 @@ function renderImages(arr) {
   }
   const markup = imageTemplate(arr);
   list.insertAdjacentHTML('beforeend', markup);
-  simpleLightbox();
+  gallery.on('show.simplelightbox');
+  gallery.refresh();
 }
 
 function imageTemplate(arr) {
@@ -88,13 +94,4 @@ function imageTemplate(arr) {
         </li>`
     )
     .join('');
-}
-
-function simpleLightbox() {
-  let gallery = new SimpleLightbox('.gallery a', {
-    captionsData: 'alt',
-    captionDelay: 250,
-  });
-  gallery.on('show.simplelightbox');
-  gallery.refresh();
 }
